@@ -25,6 +25,9 @@ GOAL_COLOR = (50, 205, 50)  # Lime green
 LIGHT_PULSE_COLOR = (255, 255, 200)  # Soft white-yellow
 TEXT_COLOR = (255, 255, 255)
 DANGER_COLOR = (220, 20, 60)  # Crimson red
+HEART_COLOR = (255, 69, 0)  # Red-orange for hearts
+BUTTON_COLOR = (70, 130, 180)
+BUTTON_HOVER_COLOR = (100, 180, 255)
 
 # Game parameters
 FPS = 60
@@ -51,12 +54,22 @@ except:
     # Fallback if sound creation fails
     jump_sound = land_sound = win_sound = level_sound = type('MockSound', (), {'play': lambda: None})()
 
-# Font setup
-font = pygame.font.SysFont('Arial', 24)
-title_font = pygame.font.SysFont('Arial', 48, bold=True)
+# Font setup - Using pixel-style fonts
+try:
+    # Try to use a pixel-style font (monospace fonts work well for pixel art look)
+    pixel_font_large = pygame.font.SysFont('Courier New', 72, bold=True)  # For title
+    pixel_font_medium = pygame.font.SysFont('Courier New', 36, bold=True)  # For buttons
+except:
+    pixel_font_large = pygame.font.Font(None, 72)
+    pixel_font_medium = pygame.font.Font(None, 36)
+
+# In-game fonts - cleaner and more readable
+ui_font = pygame.font.SysFont('Verdana', 20, bold=True)
+instruction_font = pygame.font.SysFont('Verdana', 16)
+title_font = pygame.font.SysFont('Verdana', 36, bold=True)
 
 class Player:
-    def _init_(self, x, y):
+    def __init__(self, x, y):
         self.x = x
         self.y = y
         self.width = 30
@@ -102,6 +115,7 @@ class Player:
                 if self.jumping:
                     land_sound.play()
                 self.jumping = False
+        
         # If standing on a moving platform, move with it
         if on_moving_platform:
             dx = on_moving_platform.x - on_moving_platform.last_x
@@ -117,7 +131,6 @@ class Player:
                     self.invincible = 90 
                     # 1.5 seconds of invincibility
                     # Bounce back from danger
-                  
                     self.vel_y = -10
                     if self.x < danger.x + danger.width/2:
                         self.vel_x = -8
@@ -176,7 +189,7 @@ class Player:
             pygame.draw.circle(screen, (255, 255, 200), (self.x + self.width/2, self.y - 5), 4)
 
 class Platform:
-    def _init_(self, x, y, width, height=20, is_moving=False):
+    def __init__(self, x, y, width, height=20, is_moving=False):
         self.x = x
         self.y = y
         self.width = width
@@ -244,7 +257,6 @@ class Platform:
                 
             # Add arrows to moving platforms
             if self.is_moving:
-                arrow_dir = ">" if self.move_direction > 0 else "<"
                 for i in range(0, self.width, 30):
                     arrow_x = self.x + i + 15
                     arrow_y = self.y + self.height + 10
@@ -263,7 +275,7 @@ class Platform:
                         ])
 
 class Danger:
-    def _init_(self, x, y, width, height, is_moving=False):
+    def __init__(self, x, y, width, height, is_moving=False):
         self.x = x
         self.y = y
         self.width = width
@@ -343,7 +355,7 @@ class Danger:
                                 (center_x + i - 1, center_y + 5, 2, 3))
 
 class Goal:
-    def _init_(self, x, y):
+    def __init__(self, x, y):
         self.x = x
         self.y = y
         self.width = 40
@@ -409,7 +421,7 @@ class Goal:
                 player.y + player.height > self.y)
 
 class Particle:
-    def _init_(self, x, y, color):
+    def __init__(self, x, y, color):
         self.x = x
         self.y = y
         self.color = color
@@ -431,7 +443,7 @@ class Particle:
         pygame.draw.circle(screen, (*self.color, alpha), (int(self.x), int(self.y)), int(self.size))
 
 class Level:
-    def _init_(self, level_num):
+    def __init__(self, level_num):
         self.level_num = level_num
         self.platforms = []
         self.dangers = []
@@ -444,7 +456,6 @@ class Level:
         self.platforms.append(Platform(0, SCREEN_HEIGHT - 50, SCREEN_WIDTH))
 
         # Add a small platform directly below the spawn point
-        # Player start is (100, 300) with player.height = 40, so top collision at y=340
         spawn_x, spawn_y = self.player_start
         spawn_platform_y = spawn_y + 40  # align to player bottom
         self.platforms.append(Platform(spawn_x - 50, spawn_platform_y, 100, height=20))
@@ -466,10 +477,8 @@ class Level:
             goal_x = random.randint(700, SCREEN_WIDTH - 100)
             goal_y = random.randint(40, 120)
             self.goal = Goal(goal_x, goal_y)
+            
         elif self.level_num == 2:
-            # ... rest unchanged ...
-            pass
-        # keep remaining branches unchanged
             # Level 2 - Introduces moving platforms
             self.platforms.extend([
                 Platform(200, 550, 150),
@@ -548,6 +557,78 @@ class Level:
             goal_x = random.randint(700, SCREEN_WIDTH - 100)
             goal_y = random.randint(40, 120)
             self.goal = Goal(goal_x, goal_y)
+                 
+        elif self.level_num == 6:
+            # Level 6 - Final challenge with narrow platforms and many dangers
+            self.platforms.extend([
+                Platform(200, 550, 80, is_moving=True),
+                Platform(450, 500, 80),
+                Platform(700, 450, 80, is_moving=True),
+                Platform(150, 400, 80),
+                Platform(400, 350, 80, is_moving=True),
+                Platform(650, 300, 80),
+                Platform(300, 250, 80, is_moving=True),
+                Platform(550, 200, 80),
+                Platform(200, 150, 80, is_moving=True),
+            ])
+            self.dangers.extend([
+                Danger(350, 450, 80, 20, is_moving=True),
+                Danger(500, 400, 80, 20),
+                Danger(250, 350, 80, 20, is_moving=True),
+                Danger(600, 250, 80, 20),
+                Danger(350, 200, 80, 20, is_moving=True),
+            ])
+            goal_x = random.randint(700, SCREEN_WIDTH - 100)
+            goal_y = random.randint(40, 120)
+            self.goal = Goal(goal_x, goal_y)
+                 
+        elif self.level_num == 7:
+            # Level 7 - Final challenge with narrow platforms and many dangers
+            self.platforms.extend([
+                Platform(200, 550, 80, is_moving=True),
+                Platform(450, 500, 80),
+                Platform(700, 450, 80, is_moving=True),
+                Platform(150, 400, 80),
+                Platform(400, 350, 80, is_moving=True),
+                Platform(650, 300, 80),
+                Platform(300, 250, 80, is_moving=True),
+                Platform(550, 200, 80),
+                Platform(200, 150, 80, is_moving=True),
+            ])
+            self.dangers.extend([
+                Danger(350, 450, 80, 20, is_moving=True),
+                Danger(500, 400, 80, 20),
+                Danger(250, 350, 80, 20, is_moving=True),
+                Danger(600, 250, 80, 20),
+                Danger(350, 200, 80, 20, is_moving=True),
+            ])
+            goal_x = random.randint(700, SCREEN_WIDTH - 100)
+            goal_y = random.randint(40, 120)
+            self.goal = Goal(goal_x, goal_y)
+                 
+        elif self.level_num == 8:
+            # Level 8 - Final challenge with narrow platforms and many dangers
+            self.platforms.extend([
+                Platform(200, 550, 80, is_moving=True),
+                Platform(450, 500, 80),
+                Platform(700, 450, 80, is_moving=True),
+                Platform(150, 400, 80),
+                Platform(400, 350, 80, is_moving=True),
+                Platform(650, 300, 80),
+                Platform(300, 250, 80, is_moving=True),
+                Platform(550, 200, 80),
+                Platform(200, 150, 80, is_moving=True),
+            ])
+            self.dangers.extend([
+                Danger(350, 450, 80, 20, is_moving=True),
+                Danger(500, 400, 80, 20),
+                Danger(250, 350, 80, 20, is_moving=True),
+                Danger(600, 250, 80, 20),
+                Danger(350, 200, 80, 20, is_moving=True),
+            ])
+            goal_x = random.randint(700, SCREEN_WIDTH - 100)
+            goal_y = random.randint(40, 120)
+            self.goal = Goal(goal_x, goal_y)
             
         else:
             # For levels beyond 5, generate random challenging levels
@@ -582,11 +663,57 @@ class Level:
         goal_y = random.randint(40, 120)
         self.goal = Goal(goal_x, goal_y)
 
+def draw_heart(screen, x, y, size=20, filled=True):
+    """Draw a heart shape at the given position"""
+    color = HEART_COLOR if filled else (100, 100, 100)
+    
+    # Heart shape using circles and a triangle
+    half_size = size // 2
+    
+    # Two circles for the top of the heart
+    pygame.draw.circle(screen, color, (x - half_size//2, y), half_size//2)
+    pygame.draw.circle(screen, color, (x + half_size//2, y), half_size//2)
+    
+    # Triangle for the bottom of the heart
+    points = [
+        (x - half_size, y),
+        (x + half_size, y),
+        (x, y + half_size)
+    ]
+    pygame.draw.polygon(screen, color, points)
+
+class Button:
+    def __init__(self, x, y, width, height, text, font, color=BUTTON_COLOR, hover_color=BUTTON_HOVER_COLOR):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.text = text
+        self.font = font
+        self.color = color
+        self.hover_color = hover_color
+        self.is_hovered = False
+        
+    def update(self, mouse_pos):
+        self.is_hovered = self.rect.collidepoint(mouse_pos)
+        
+    def draw(self, screen):
+        color = self.hover_color if self.is_hovered else self.color
+        pygame.draw.rect(screen, color, self.rect, 0, 10)
+        pygame.draw.rect(screen, TEXT_COLOR, self.rect, 3, 10)
+        
+        # Draw text
+        text_surface = self.font.render(self.text, True, TEXT_COLOR)
+        text_rect = text_surface.get_rect(center=self.rect.center)
+        screen.blit(text_surface, text_rect)
+        
+    def is_clicked(self, mouse_pos, mouse_pressed):
+        return self.rect.collidepoint(mouse_pos) and mouse_pressed[0]
+
 class Game:
-    def _init_(self):
+    def __init__(self):
         self.clock = pygame.time.Clock()
         self.level_num = 1
         self.max_level = 8  # Maximum number of levels
+        self.game_state = "start"  # "start", "playing", "win", "game_over"
+        self.start_button = Button(SCREEN_WIDTH//2 - 150, SCREEN_HEIGHT//2 + 50, 300, 60, "START GAME", pixel_font_medium)
         self.reset_game()
         
     def reset_game(self):
@@ -599,8 +726,7 @@ class Game:
         # Particles for effects
         self.particles = []
         
-        # Game state
-        self.game_state = "playing"  # "playing", "win", "game_over"
+        # Game timers
         self.win_timer = 0
         self.level_transition_timer = 0
         
@@ -609,33 +735,52 @@ class Game:
         if self.level_num > self.max_level:
             self.level_num = 1  # Loop back to level 1 after completing all levels
         self.reset_game()
+        self.game_state = "playing"  # Ensure we stay in playing state
         level_sound.play()
         
     def handle_events(self):
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_pressed = pygame.mouse.get_pressed()
+        
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
                 
             if event.type == KEYDOWN:
-                if event.key == K_SPACE and self.game_state == "playing":
-                    self.player.jump()
+                if self.game_state == "start":
+                    if event.key == K_SPACE:
+                        self.game_state = "playing"
+                elif self.game_state == "playing":
+                    if event.key == K_SPACE:
+                        self.player.jump()
+                
                 if event.key == K_r:
+                    self.level_num = 1
                     self.reset_game()
+                    self.game_state = "playing"
+                    
                 if event.key == K_n and self.game_state == "win" and self.win_timer <= 0:
                     self.next_level()
                     
-        # Continuous key presses
-        keys = pygame.key.get_pressed()
-        self.player.vel_x = 0
-        
-        if keys[K_LEFT] or keys[K_a]:
-            self.player.vel_x = -PLAYER_SPEED
-            self.player.facing_right = False
+        # Handle start button click
+        if self.game_state == "start":
+            self.start_button.update(mouse_pos)
+            if self.start_button.is_clicked(mouse_pos, mouse_pressed):
+                self.game_state = "playing"
+                
+        # Continuous key presses for movement
+        if self.game_state == "playing":
+            keys = pygame.key.get_pressed()
+            self.player.vel_x = 0
             
-        if keys[K_RIGHT] or keys[K_d]:
-            self.player.vel_x = PLAYER_SPEED
-            self.player.facing_right = True
+            if keys[K_LEFT] or keys[K_a]:
+                self.player.vel_x = -PLAYER_SPEED
+                self.player.facing_right = False
+                
+            if keys[K_RIGHT] or keys[K_d]:
+                self.player.vel_x = PLAYER_SPEED
+                self.player.facing_right = True
             
     def update(self):
         if self.game_state == "playing":
@@ -692,6 +837,7 @@ class Game:
             if self.win_timer <= 0:
                 # Reset to level 1 on game over
                 self.level_num = 1
+                self.game_state = "start"
                 self.reset_game()
                 
         # Handle level transition
@@ -703,7 +849,43 @@ class Game:
         # Update particles
         self.particles = [p for p in self.particles if p.update()]
         
-    def draw(self):
+    def draw_start_screen(self):
+        # Draw background with stars
+        screen.fill(BACKGROUND)
+        for i in range(100):
+            x = (i * 97) % SCREEN_WIDTH
+            y = (i * 63) % SCREEN_HEIGHT
+            brightness = (i * 53) % 155 + 100
+            size = (i % 3) + 1
+            pygame.draw.circle(screen, (brightness, brightness, brightness), (x, y), size)
+        
+        # Draw title with pixel art font
+        title_text = pixel_font_large.render("LIGHT JUMPER", True, (255, 215, 0))
+        title_rect = title_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 100))
+        screen.blit(title_text, title_rect)
+        
+        # Draw subtitle
+        subtitle_text = pixel_font_medium.render("Navigate in the Dark", True, TEXT_COLOR)
+        subtitle_rect = subtitle_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 40))
+        screen.blit(subtitle_text, subtitle_rect)
+        
+        # Draw start button
+        self.start_button.draw(screen)
+        
+        # Draw instructions
+        instructions = [
+            "Use LEFT/RIGHT or A/D to move",
+            "Press SPACE to jump and reveal platforms",
+            "Avoid red danger zones!",
+            "Reach the glowing green door to win!"
+        ]
+        
+        for i, line in enumerate(instructions):
+            text = instruction_font.render(line, True, (200, 200, 200))
+            text_rect = text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 150 + i * 25))
+            screen.blit(text, text_rect)
+        
+    def draw_game(self):
         # Draw background with a starry effect
         screen.fill(BACKGROUND)
         
@@ -736,34 +918,42 @@ class Game:
         # Draw UI
         self.draw_ui()
         
+    def draw(self):
+        if self.game_state == "start":
+            self.draw_start_screen()
+        else:
+            self.draw_game()
+        
         # Update display
         pygame.display.flip()
         
     def draw_ui(self):
         # Draw level indicator
-        level_text = font.render(f"Level: {self.level_num}/{self.max_level}", True, TEXT_COLOR)
+        level_text = ui_font.render(f"Level: {self.level_num}/{self.max_level}", True, TEXT_COLOR)
         screen.blit(level_text, (20, 20))
         
         # Draw jump counter
-        jumps_text = font.render(f"Jumps: {self.player.jump_count}", True, TEXT_COLOR)
+        jumps_text = ui_font.render(f"Jumps: {self.player.jump_count}", True, TEXT_COLOR)
         screen.blit(jumps_text, (20, 50))
         
-        # Draw lives
-        lives_text = font.render(f"Lives: {self.player.lives}", True, TEXT_COLOR)
-        screen.blit(lives_text, (20, 80))
+        # Draw lives as hearts
+        for i in range(3):
+            heart_x = 20 + i * 35
+            heart_y = 90
+            draw_heart(screen, heart_x, heart_y, 24, filled=(i < self.player.lives))
         
-        # Draw instructions
+        # Draw instructions during gameplay
         if self.game_state == "playing":
             instructions = [
-                "Use LEFT/RIGHT or A/D to move",
-                "Press SPACE to jump and reveal platforms",
-                "Avoid red danger zones!",
-                "Reach the glowing green door to win!"
+                "LEFT/RIGHT or A/D: Move",
+                "SPACE: Jump & Reveal",
+                "Avoid Red Zones!",
+                "Reach Green Door!"
             ]
             
             for i, line in enumerate(instructions):
-                text = font.render(line, True, TEXT_COLOR)
-                screen.blit(text, (SCREEN_WIDTH - text.get_width() - 20, 20 + i * 30))
+                text = instruction_font.render(line, True, TEXT_COLOR)
+                screen.blit(text, (SCREEN_WIDTH - text.get_width() - 20, 20 + i * 25))
                 
         # Draw win message
         if self.game_state == "win":
@@ -780,13 +970,13 @@ class Game:
                 win_text = title_font.render("Level Complete!", True, (255, 215, 0))
                 screen.blit(win_text, (SCREEN_WIDTH//2 - win_text.get_width()//2, SCREEN_HEIGHT//2 - 50))
                 
-                stats_text = font.render(f"Jumps used: {self.player.jump_count}", True, TEXT_COLOR)
+                stats_text = ui_font.render(f"Jumps used: {self.player.jump_count}", True, TEXT_COLOR)
                 screen.blit(stats_text, (SCREEN_WIDTH//2 - stats_text.get_width()//2, SCREEN_HEIGHT//2 + 20))
                 
                 if self.level_num < self.max_level:
-                    continue_text = font.render("Press N for next level or R to restart", True, TEXT_COLOR)
+                    continue_text = ui_font.render("Press N for next level or R to restart", True, TEXT_COLOR)
                 else:
-                    continue_text = font.render("You completed all levels! Press R to play again", True, TEXT_COLOR)
+                    continue_text = ui_font.render("You completed all levels! Press R to play again", True, TEXT_COLOR)
                 screen.blit(continue_text, (SCREEN_WIDTH//2 - continue_text.get_width()//2, SCREEN_HEIGHT//2 + 70))
                 
         # Draw game over message
@@ -799,7 +989,7 @@ class Game:
             game_over_text = title_font.render("Game Over!", True, DANGER_COLOR)
             screen.blit(game_over_text, (SCREEN_WIDTH//2 - game_over_text.get_width()//2, SCREEN_HEIGHT//2 - 50))
             
-            restart_text = font.render("Restarting...", True, TEXT_COLOR)
+            restart_text = ui_font.render("Returning to start screen...", True, TEXT_COLOR)
             screen.blit(restart_text, (SCREEN_WIDTH//2 - restart_text.get_width()//2, SCREEN_HEIGHT//2 + 20))
             
     def run(self):
@@ -810,6 +1000,6 @@ class Game:
             self.clock.tick(FPS)
 
 # Create and run the game
-if __name__ == "_main_":
+if __name__ == "__main__":
     game = Game()
     game.run()
