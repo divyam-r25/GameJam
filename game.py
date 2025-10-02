@@ -69,7 +69,7 @@ instruction_font = pygame.font.SysFont('Verdana', 16)
 title_font = pygame.font.SysFont('Verdana', 36, bold=True)
 
 class Player:
-    def __init__(self, x, y):
+    def _init_(self, x, y):
         self.x = x
         self.y = y
         self.width = 30
@@ -189,7 +189,7 @@ class Player:
             pygame.draw.circle(screen, (255, 255, 200), (self.x + self.width/2, self.y - 5), 4)
 
 class Platform:
-    def __init__(self, x, y, width, height=20, is_moving=False):
+    def _init_(self, x, y, width, height=20, is_moving=False):
         self.x = x
         self.y = y
         self.width = width
@@ -202,8 +202,8 @@ class Platform:
         self.move_direction = 1
         self.move_speed = 1 if is_moving else 0
         self.move_range = 100 if is_moving else 0
-        self.last_x = x  # Track previous x for delta calculation
-        
+        self.last_x = x
+
     def update(self, player):
         self.last_x = self.x  # Store current x before moving
         # Move if it's a moving platform
@@ -275,7 +275,7 @@ class Platform:
                         ])
 
 class Danger:
-    def __init__(self, x, y, width, height, is_moving=False):
+    def _init_(self, x, y, width, height, is_moving=False):
         self.x = x
         self.y = y
         self.width = width
@@ -355,7 +355,7 @@ class Danger:
                                 (center_x + i - 1, center_y + 5, 2, 3))
 
 class Goal:
-    def __init__(self, x, y):
+    def _init_(self, x, y):
         self.x = x
         self.y = y
         self.width = 40
@@ -363,7 +363,7 @@ class Goal:
         self.revealed = False
         self.reveal_timer = 0
         self.pulse = 0
-        
+
     def update(self, player):
         # Pulsing effect
         self.pulse = (self.pulse + 0.05) % (2 * math.pi)
@@ -421,7 +421,7 @@ class Goal:
                 player.y + player.height > self.y)
 
 class Particle:
-    def __init__(self, x, y, color):
+    def _init_(self, x, y, color):
         self.x = x
         self.y = y
         self.color = color
@@ -443,14 +443,14 @@ class Particle:
         pygame.draw.circle(screen, (*self.color, alpha), (int(self.x), int(self.y)), int(self.size))
 
 class Level:
-    def __init__(self, level_num):
+    def _init_(self, level_num):
         self.level_num = level_num
         self.platforms = []
         self.dangers = []
         self.goal = None
         self.player_start = (100, 300)
         self.setup_level()
-        
+
     def setup_level(self):
         # Common ground platform
         self.platforms.append(Platform(0, SCREEN_HEIGHT - 50, SCREEN_WIDTH))
@@ -559,77 +559,130 @@ class Level:
             self.goal = Goal(goal_x, goal_y)
                  
         elif self.level_num == 6:
-            # Level 6 - Final challenge with narrow platforms and many dangers
+            # Level 6 - Tiny moving platforms with traps below
             self.platforms.extend([
-                Platform(200, 550, 80, is_moving=True),
-                Platform(450, 500, 80),
-                Platform(700, 450, 80, is_moving=True),
-                Platform(150, 400, 80),
-                Platform(400, 350, 80, is_moving=True),
-                Platform(650, 300, 80),
-                Platform(300, 250, 80, is_moving=True),
-                Platform(550, 200, 80),
-                Platform(200, 150, 80, is_moving=True),
+                Platform(200, 550, 60, is_moving=True),
+                Platform(400, 500, 60, is_moving=True),
+                Platform(600, 450, 60, is_moving=True),
+                Platform(800, 400, 60, is_moving=True),
+                Platform(500, 300, 60, is_moving=True),
             ])
             self.dangers.extend([
-                Danger(350, 450, 80, 20, is_moving=True),
-                Danger(500, 400, 80, 20),
-                Danger(250, 350, 80, 20, is_moving=True),
-                Danger(600, 250, 80, 20),
-                Danger(350, 200, 80, 20, is_moving=True),
+                Danger(200, 570, 150, 20, is_moving=True),
+                Danger(450, 520, 120, 20),
+                Danger(650, 470, 100, 20, is_moving=True),
             ])
-            goal_x = random.randint(700, SCREEN_WIDTH - 100)
-            goal_y = random.randint(40, 120)
-            self.goal = Goal(goal_x, goal_y)
-                 
+            self.goal = Goal(850, 120)
+
         elif self.level_num == 7:
-            # Level 7 - Final challenge with narrow platforms and many dangers
+            # Level 7 - Zigzag with criss-cross dangers
             self.platforms.extend([
-                Platform(200, 550, 80, is_moving=True),
-                Platform(450, 500, 80),
-                Platform(700, 450, 80, is_moving=True),
-                Platform(150, 400, 80),
-                Platform(400, 350, 80, is_moving=True),
-                Platform(650, 300, 80),
-                Platform(300, 250, 80, is_moving=True),
-                Platform(550, 200, 80),
-                Platform(200, 150, 80, is_moving=True),
+                Platform(150, 550, 70),
+                Platform(350, 480, 70, is_moving=True),
+                Platform(550, 410, 70),
+                Platform(750, 340, 70, is_moving=True),
+                Platform(500, 250, 70),
             ])
             self.dangers.extend([
-                Danger(350, 450, 80, 20, is_moving=True),
-                Danger(500, 400, 80, 20),
-                Danger(250, 350, 80, 20, is_moving=True),
-                Danger(600, 250, 80, 20),
-                Danger(350, 200, 80, 20, is_moving=True),
+                Danger(250, 530, 100, 20, is_moving=True),
+                Danger(450, 460, 120, 20, is_moving=True),
+                Danger(650, 390, 140, 20),
+                Danger(400, 220, 120, 20, is_moving=True),
             ])
-            goal_x = random.randint(700, SCREEN_WIDTH - 100)
-            goal_y = random.randint(40, 120)
-            self.goal = Goal(goal_x, goal_y)
-                 
+            self.goal = Goal(780, 100)
+
         elif self.level_num == 8:
-            # Level 8 - Final challenge with narrow platforms and many dangers
+            # Level 8 - Narrow stacked platforms with heavy dangers
             self.platforms.extend([
-                Platform(200, 550, 80, is_moving=True),
-                Platform(450, 500, 80),
-                Platform(700, 450, 80, is_moving=True),
-                Platform(150, 400, 80),
-                Platform(400, 350, 80, is_moving=True),
-                Platform(650, 300, 80),
-                Platform(300, 250, 80, is_moving=True),
-                Platform(550, 200, 80),
-                Platform(200, 150, 80, is_moving=True),
+                Platform(250, 550, 60, is_moving=True),
+                Platform(450, 480, 60),
+                Platform(650, 410, 60, is_moving=True),
+                Platform(350, 340, 60),
+                Platform(550, 270, 60, is_moving=True),
+                Platform(750, 200, 60),
             ])
             self.dangers.extend([
-                Danger(350, 450, 80, 20, is_moving=True),
-                Danger(500, 400, 80, 20),
-                Danger(250, 350, 80, 20, is_moving=True),
-                Danger(600, 250, 80, 20),
-                Danger(350, 200, 80, 20, is_moving=True),
+                Danger(200, 520, 500, 20, is_moving=True),
+                Danger(300, 450, 400, 20),
+                Danger(400, 380, 300, 20, is_moving=True),
+                Danger(500, 310, 200, 20),
+                Danger(600, 240, 100, 20, is_moving=True),
             ])
-            goal_x = random.randint(700, SCREEN_WIDTH - 100)
-            goal_y = random.randint(40, 120)
-            self.goal = Goal(goal_x, goal_y)
-            
+            self.goal = Goal(800, 80)
+
+        elif self.level_num == 9:
+            # Level 9 - Tiny platforms + many dangers
+            self.platforms.extend([
+                Platform(200, 550, 60, is_moving=True),
+                Platform(400, 500, 60),
+                Platform(600, 450, 60, is_moving=True),
+                Platform(800, 400, 60),
+                Platform(500, 300, 60, is_moving=True),
+                Platform(300, 200, 60),
+            ])
+            self.dangers.extend([
+                Danger(250, 520, 100, 20, is_moving=True),
+                Danger(450, 470, 120, 20),
+                Danger(700, 350, 100, 20, is_moving=True),
+            ])
+            self.goal = Goal(850, 100)
+
+        elif self.level_num == 10:
+            # Level 10 - Criss-cross moving platforms
+            self.platforms.extend([
+                Platform(200, 550, 70, is_moving=True),
+                Platform(400, 500, 70, is_moving=True),
+                Platform(600, 450, 70, is_moving=True),
+                Platform(800, 400, 70, is_moving=True),
+                Platform(500, 300, 70, is_moving=True),
+            ])
+            self.dangers.extend([
+                Danger(300, 480, 80, 20, is_moving=True),
+                Danger(500, 380, 80, 20, is_moving=True),
+                Danger(700, 280, 80, 20, is_moving=True),
+            ])
+            self.goal = Goal(850, 150)
+
+        elif self.level_num == 11:
+            # Level 11 - Platforms vanish into voids
+            self.platforms.extend([
+                Platform(150, 550, 80),
+                Platform(350, 500, 60, is_moving=True),
+                Platform(550, 420, 60),
+                Platform(750, 340, 60, is_moving=True),
+                Platform(400, 250, 60),
+            ])
+            self.dangers.extend([
+                Danger(200, 520, 150, 20, is_moving=True),
+                Danger(600, 390, 150, 20),
+                Danger(450, 220, 150, 20, is_moving=True),
+            ])
+            self.goal = Goal(780, 120)
+
+        elif self.level_num == 12:
+            # Level 12 - Narrow corridors of dangers
+            self.platforms.extend([
+                Platform(200, 550, 60, is_moving=True),
+                Platform(400, 450, 60, is_moving=True),
+                Platform(600, 350, 60, is_moving=True),
+                Platform(800, 250, 60, is_moving=True),
+            ])
+            self.dangers.extend([
+                Danger(250, 520, 500, 20, is_moving=True),
+                Danger(250, 420, 500, 20, is_moving=True),
+                Danger(250, 320, 500, 20, is_moving=True),
+            ])
+            self.goal = Goal(850, 100)
+
+        elif self.level_num == 13:
+            # Level 13 - Pure chaos
+            for i in range(5):
+                self.platforms.append(Platform(200 + i*150, 550 - i*80, 50, is_moving=True))
+                self.dangers.append(Danger(180 + i*150, 530 - i*80, 120, 20, is_moving=True))
+            self.goal = Goal(900, 80)
+
+
+
         else:
             # For levels beyond 5, generate random challenging levels
             self.generate_random_level()
@@ -683,14 +736,14 @@ def draw_heart(screen, x, y, size=20, filled=True):
     pygame.draw.polygon(screen, color, points)
 
 class Button:
-    def __init__(self, x, y, width, height, text, font, color=BUTTON_COLOR, hover_color=BUTTON_HOVER_COLOR):
+    def _init_(self, x, y, width, height, text, font, color=BUTTON_COLOR, hover_color=BUTTON_HOVER_COLOR):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
         self.font = font
         self.color = color
         self.hover_color = hover_color
         self.is_hovered = False
-        
+
     def update(self, mouse_pos):
         self.is_hovered = self.rect.collidepoint(mouse_pos)
         
@@ -708,11 +761,11 @@ class Button:
         return self.rect.collidepoint(mouse_pos) and mouse_pressed[0]
 
 class Game:
-    def __init__(self):
+    def _init_(self):
         self.clock = pygame.time.Clock()
         self.level_num = 1
-        self.max_level = 8  # Maximum number of levels
-        self.game_state = "start"  # "start", "playing", "win", "game_over"
+        self.max_level = 13
+        self.game_state = "start"
         self.start_button = Button(SCREEN_WIDTH//2 - 150, SCREEN_HEIGHT//2 + 50, 300, 60, "START GAME", pixel_font_medium)
         self.reset_game()
         
@@ -1000,6 +1053,6 @@ class Game:
             self.clock.tick(FPS)
 
 # Create and run the game
-if __name__ == "__main__":
+if __name__ == "_main_":
     game = Game()
     game.run()
